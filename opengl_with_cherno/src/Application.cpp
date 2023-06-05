@@ -11,6 +11,7 @@
     x;\
     ASSERT (GLLogCall(#x, __FILE__, __LINE__));
 //‘#’可以将变量转化为字符串， __FILE__文件路径, __LINE__是代码行号
+//可以在每个opengl的函数上套上CGLCALL，debugger更简单
 
 static void GLClearError() {
     while (glGetError() != GL_NO_ERROR);
@@ -166,6 +167,7 @@ int main(void)
 
         GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_INT, nullptr));//6是索引的数量
         //if this line has error, the GLCALL was clear the error and get a breakpoint in this line
+        //此处GL_INT应改为无符号整型GL_UNSIGNED_INT。嗯，是故意的
 
         glfwSwapBuffers(window);
 
