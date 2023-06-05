@@ -88,7 +88,7 @@ int main(void)
     if (!glfwInit())
         return -1;
 
-    window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+    window = glfwCreateWindow(1024, 768, "Hello World", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -101,16 +101,22 @@ int main(void)
     //glewInit应该在创建上下文之后调用
     std::cout << glGetString(GL_VERSION) << std::endl;
 
-    float position[6]{
+    float position[]{
         -0.5f,  -0.5f,
-        0.0f,   0.5f,
-        0.5f,   -0.5f
+         0.5f,  -0.5f,
+         0.5f,   0.5f,
+        -0.5f,   0.5f,
+    };
+
+    unsigned int indices[] = {
+        0, 1, 2,
+        2, 3, 0
     };
 
     uint32_t buffer;
     glGenBuffers(1, &buffer);
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, 6*sizeof(float), position, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 6 * 2 * sizeof(float), position, GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
@@ -123,6 +129,11 @@ int main(void)
     * 
     */
 
+    uint32_t ibo; //index buffer object
+    glGenBuffers(1, &ibo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
+
     
     ShaderSources source = ParseShader("res/shaders/Basic.shader");
     unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
@@ -131,7 +142,7 @@ int main(void)
     {
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);//6是索引的数量
 
         glfwSwapBuffers(window);
 
