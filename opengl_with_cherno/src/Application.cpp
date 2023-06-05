@@ -6,6 +6,28 @@
 #include <sstream>
 #include <string>
 
+#define ASSERT(x) if (!(x)) __debugbreak();
+#define GLCALL(x) GLClearError();\
+    x;\
+    ASSERT (GLLogCall(#x, __FILE__, __LINE__));
+//‘#’可以将变量转化为字符串， __FILE__文件路径, __LINE__是代码行号
+
+static void GLClearError() {
+    while (glGetError() != GL_NO_ERROR);
+}
+
+static bool GLLogCall(const char* function, const char* file, int line) {
+    while (GLenum error = glGetError()) {
+        std::cout << "[OpenGL Error] (" << error << ")" << std::endl
+            << function << ": \n"
+            << file << " \n"
+            << "line:" << line << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
 struct ShaderSources {
     std::string VertexSource;
     std::string FragmentSource;
@@ -142,7 +164,8 @@ int main(void)
     {
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);//6是索引的数量
+        GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_INT, nullptr));//6是索引的数量
+        //if this line has error, the GLCALL was clear the error and get a breakpoint in this line
 
         glfwSwapBuffers(window);
 
