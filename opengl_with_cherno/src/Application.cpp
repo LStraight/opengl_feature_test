@@ -111,6 +111,11 @@ int main(void)
     if (!glfwInit())
         return -1;
 
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+
     window = glfwCreateWindow(1024, 768, "Hello World", NULL, NULL);
     if (!window)
     {
@@ -118,7 +123,7 @@ int main(void)
         return -1;
     }
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(100); //设置前后缓冲区交换间隔
+    glfwSwapInterval(1); //设置前后缓冲区交换间隔，默认是60帧，此处1表示一帧一换，写入2则可实现30帧
 
     if (glewInit() != GLEW_OK) 
         std::cout << "Error" << std::endl;
@@ -137,13 +142,17 @@ int main(void)
         2, 3, 0
     };
 
-    uint32_t buffer;
+    unsigned int vao;
+    GLCALL(glGenVertexArrays(1, &vao));
+    GLCALL(glBindVertexArray(vao));
+
+    unsigned int buffer;
     glGenBuffers(1, &buffer);
     glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, 6 * 2 * sizeof(float), position, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 4 * 2 * sizeof(float), position, GL_STATIC_DRAW);
 
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0); //这行代码来连接了buffer和vao
     /*
     * 层数，layout
     * 顶点属性数量：此处只有二维坐标，所以当传入2，如果除了坐标还有别的属性，比如纹理法向，则按实际填入
@@ -158,13 +167,18 @@ int main(void)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
 
-    
     ShaderSources source = ParseShader("res/shaders/Basic.shader");
     unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
     glUseProgram(shader);
 
     int location = glGetUniformLocation(shader, "u_Color");
+    ASSERT(location != -1);
     glUniform4f(location, 0.2f, 0.4f, 0.3f, 1.0f);
+
+    GLCALL(glBindVertexArray(0));
+    GLCALL(glUseProgram(0));
+    GLCALL(glBindBuffer(GL_ARRAY_BUFFER, 0));
+    GLCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 
     float r = 0.0f;
     float g = 0.0f;
@@ -175,10 +189,17 @@ int main(void)
 
     while (!glfwWindowShouldClose(window))
     {
-        glClear(GL_COLOR_BUFFER_BIT);
+        GLCALL(glClear(GL_COLOR_BUFFER_BIT));
 
+        GLCALL(glUseProgram(shader));
+        GLCALL(glUniform4f(location, r, g, b, 1.0f));
 
-        glUniform4f(location, r, 0.4f, 0.3f, 1.0f);
+        //GLCALL(glBindBuffer(GL_ARRAY_BUFFER, buffer));
+        //GLCALL(glEnableVertexAttribArray(0));
+        //GLCALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0));
+        GLCALL(glBindVertexArray(vao));
+        GLCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
+
         GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));//6是索引的数量
         //if this line has error, the GLCALL was clear the error and get a breakpoint in this line
         //此处GL_INT应改为无符号整型GL_UNSIGNED_INT。嗯，是故意的
@@ -186,7 +207,7 @@ int main(void)
         if (r > 1.0f) increment = -0.005f;
         else if (r < 0.0f) increment = 0.005f;
         if (g > 1.0f) incrementg = -0.003f;
-        else if (g < 0.0f) incrementg = 0.003f; 
+        else if (g < 0.0f) incrementg = 0.003f;
         if (b > 1.0f) incrementb = -0.007f;
         else if (b < 0.0f) incrementb = 0.007f;
         r += increment;
