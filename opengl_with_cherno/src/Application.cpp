@@ -118,6 +118,7 @@ int main(void)
         return -1;
     }
     glfwMakeContextCurrent(window);
+    glfwSwapInterval(100); //设置前后缓冲区交换间隔
 
     if (glewInit() != GLEW_OK) 
         std::cout << "Error" << std::endl;
@@ -160,18 +161,41 @@ int main(void)
     
     ShaderSources source = ParseShader("res/shaders/Basic.shader");
     unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
-     glUseProgram(shader);
+    glUseProgram(shader);
+
+    int location = glGetUniformLocation(shader, "u_Color");
+    glUniform4f(location, 0.2f, 0.4f, 0.3f, 1.0f);
+
+    float r = 0.0f;
+    float g = 0.0f;
+    float b = 0.0f;
+    float increment = 0.005f;
+    float incrementg = 0.005f;
+    float incrementb = 0.005f;
+
     while (!glfwWindowShouldClose(window))
     {
         glClear(GL_COLOR_BUFFER_BIT);
 
-        GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_INT, nullptr));//6是索引的数量
+
+        glUniform4f(location, r, 0.4f, 0.3f, 1.0f);
+        GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));//6是索引的数量
         //if this line has error, the GLCALL was clear the error and get a breakpoint in this line
         //此处GL_INT应改为无符号整型GL_UNSIGNED_INT。嗯，是故意的
 
+        if (r > 1.0f) increment = -0.005f;
+        else if (r < 0.0f) increment = 0.005f;
+        if (g > 1.0f) incrementg = -0.003f;
+        else if (g < 0.0f) incrementg = 0.003f; 
+        if (b > 1.0f) incrementb = -0.007f;
+        else if (b < 0.0f) incrementb = 0.007f;
+        r += increment;
+        g += incrementg;
+        b += incrementb;
         glfwSwapBuffers(window);
 
         glfwPollEvents();
+
     }
 
     glDeleteProgram(shader);
