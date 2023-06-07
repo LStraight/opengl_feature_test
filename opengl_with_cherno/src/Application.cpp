@@ -6,28 +6,11 @@
 #include <sstream>
 #include <string>
 
-#define ASSERT(x) if (!(x)) __debugbreak();
-#define GLCALL(x) GLClearError();\
-    x;\
-    ASSERT (GLLogCall(#x, __FILE__, __LINE__));
-//‘#’可以将变量转化为字符串， __FILE__文件路径, __LINE__是代码行号
-//可以在每个opengl的函数上套上CGLCALL，debugger更简单
-
-static void GLClearError() {
-    while (glGetError() != GL_NO_ERROR);
-}
-
-static bool GLLogCall(const char* function, const char* file, int line) {
-    while (GLenum error = glGetError()) {
-        std::cout << "[OpenGL Error] (" << error << ")" << std::endl
-            << function << ": \n"
-            << file << " \n"
-            << "line:" << line << std::endl;
-        return false;
-    }
-
-    return true;
-}
+#include "Renderer.hpp"
+#include "VertexArray.hpp"
+#include "VertexBuffer.hpp"
+#include "IndexBuffer.hpp"
+#include "VertexBufferLayout.hpp"
 
 struct ShaderSources {
     std::string VertexSource;
@@ -68,7 +51,6 @@ static unsigned int ComplieShader(unsigned int type, const std::string& source) 
     glShaderSource(id, 1, &src, nullptr);
     glCompileShader(id);
     
-    //TODO: Error handing 
     int result;
     glGetShaderiv(id, GL_COMPILE_STATUS, &result);
     if (result == GL_FALSE) {
@@ -123,11 +105,10 @@ int main(void)
         return -1;
     }
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(1); //设置前后缓冲区交换间隔，默认是60帧，此处1表示一帧一换，写入2则可实现30帧
+    glfwSwapInterval(1); 
 
     if (glewInit() != GLEW_OK) 
         std::cout << "Error" << std::endl;
-    //glewInit应该在创建上下文之后调用
     std::cout << glGetString(GL_VERSION) << std::endl;
 
     float position[]{
@@ -146,26 +127,14 @@ int main(void)
     GLCALL(glGenVertexArrays(1, &vao));
     GLCALL(glBindVertexArray(vao));
 
-    unsigned int buffer;
-    glGenBuffers(1, &buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, 4 * 2 * sizeof(float), position, GL_STATIC_DRAW);
+    VertexArray va;
+    VertexBuffer vb(position, 8 * sizeof(float));
 
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0); //这行代码来连接了buffer和vao
-    /*
-    * 层数，layout
-    * 顶点属性数量：此处只有二维坐标，所以当传入2，如果除了坐标还有别的属性，比如纹理法向，则按实际填入
-    * 数据类型：此处为float
-    * 需不需要正则化：此处已正则化，填false
-    * 步长：每个顶点（类比结构体）属性的大小，此处是顶点属性数量*float大小
-    * 
-    */
+    VertexBufferLayout layout;
+    layout.Push<float>(2);
+    va.AddBuffer(vb, layout);
 
-    uint32_t ibo; //index buffer object
-    glGenBuffers(1, &ibo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
+    IndexBuffer ib(indices, 6);
 
     ShaderSources source = ParseShader("res/shaders/Basic.shader");
     unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
@@ -197,8 +166,8 @@ int main(void)
         //GLCALL(glBindBuffer(GL_ARRAY_BUFFER, buffer));
         //GLCALL(glEnableVertexAttribArray(0));
         //GLCALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0));
-        GLCALL(glBindVertexArray(vao));
-        GLCALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
+        va.Bind();
+        ib.Bind();
 
         GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));//6是索引的数量
         //if this line has error, the GLCALL was clear the error and get a breakpoint in this line
