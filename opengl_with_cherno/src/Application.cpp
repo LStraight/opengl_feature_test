@@ -163,15 +163,10 @@ int main(void)
         GLCALL(glUseProgram(shader));
         GLCALL(glUniform4f(location, r, g, b, 1.0f));
 
-        //GLCALL(glBindBuffer(GL_ARRAY_BUFFER, buffer));
-        //GLCALL(glEnableVertexAttribArray(0));
-        //GLCALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0));
         va.Bind();
         ib.Bind();
 
-        GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));//6是索引的数量
-        //if this line has error, the GLCALL was clear the error and get a breakpoint in this line
-        //此处GL_INT应改为无符号整型GL_UNSIGNED_INT。嗯，是故意的
+        GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
 
         if (r > 1.0f) increment = -0.005f;
         else if (r < 0.0f) increment = 0.005f;
