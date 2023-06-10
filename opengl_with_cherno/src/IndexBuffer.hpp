@@ -11,6 +11,7 @@ public:
 	//data: 数据的大小 count: 计数
 	~IndexBuffer();
 
+	unsigned int GetCount() const;
 	void Bind() const;
 	void Unbind() const;
 };

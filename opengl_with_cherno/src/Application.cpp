@@ -12,6 +12,7 @@
 #include "IndexBuffer.hpp"
 #include "VertexBufferLayout.hpp"
 #include "Shader.hpp"
+#include "Texture.hpp"
 
 
 int main(void)
@@ -40,10 +41,10 @@ int main(void)
     std::cout << glGetString(GL_VERSION) << std::endl;
 
     float position[]{
-        -0.5f,  -0.5f,
-         0.5f,  -0.5f,
-         0.5f,   0.5f,
-        -0.5f,   0.5f,
+        -0.5f, -0.5f, 0.0f, 0.0f,
+         0.5f, -0.5f, 1.0f, 0.0f,
+         0.5f,  0.5f, 1.0f, 1.0f,
+        -0.5f,  0.5f, 0.0f, 1.0f
     };
 
     unsigned int indices[] = {
@@ -56,9 +57,10 @@ int main(void)
     GLCALL(glBindVertexArray(vao));
 
     VertexArray va;
-    VertexBuffer vb(position, 8 * sizeof(float));
+    VertexBuffer vb(position, 4 * 4 * sizeof(float));
 
     VertexBufferLayout layout;
+    layout.Push<float>(2);
     layout.Push<float>(2);
     va.AddBuffer(vb, layout);
 
@@ -68,11 +70,18 @@ int main(void)
     shader.Bind();
     shader.SetUniform4f("u_Color", 0.2f, 0.4f, 0.3f, 1.0f);
 
+    Texture texture("res/textures/picnic.png");
+    texture.Bind();
+    shader.SetUniform1i("u_Texture", 0);
+    //texture.Bind(2);
+    //shader.SetUniform1i("u_Texture", 2);
+
     va.Unbind();
     vb.Unbind();
     ib.Unbind();
     shader.Unbind();
 
+    Renderer renderer;
 
     float r = 0.0f;
     float g = 0.0f;
@@ -83,13 +92,13 @@ int main(void)
 
     while (!glfwWindowShouldClose(window))
     {
-        GLCALL(glClear(GL_COLOR_BUFFER_BIT));
-
+        renderer.Clear();
         shader.Bind();
         shader.SetUniform4f("u_Color", r, g, b, 1.0f);
 
         va.Bind();
         ib.Bind();
+        renderer.Draw(va, ib, shader);
 
         GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
 
