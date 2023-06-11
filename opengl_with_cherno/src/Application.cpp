@@ -47,10 +47,10 @@ int main(void)
     std::cout << glGetString(GL_VERSION) << std::endl;
 
     float position[]{
-        100.0f, 100.0f, 0.0f, 0.0f,
-        200.0f, 100.0f, 1.0f, 0.0f,
-        200.0f, 200.0f, 1.0f, 1.0f,
-        100.0f, 200.0f, 0.0f, 1.0f
+        0.0f, 0.0f, 0.0f, 0.0f,
+        500.0f, 0.0f, 1.0f, 0.0f,
+        500.0f, 280.0f, 1.0f, 1.0f,
+        0.0f, 280.0f, 0.0f, 1.0f
     };
 
     unsigned int indices[] = {
@@ -80,11 +80,10 @@ int main(void)
         IndexBuffer ib(indices, 6);
 
         glm::mat4 proj = glm::ortho(.0f, 960.0f, 0.0f, 540.0f, -1.0f, 1.0f);
-        glm::mat4 view = glm::translate(glm::mat4(1.0), glm::vec3(-100.0f, 0.0f, 0.0f));
+        glm::mat4 view = glm::translate(glm::mat4(1.0), glm::vec3(0.0f, 0.0f, 0.0f));
 
         Shader shader("res/shaders/Basic.shader");
         shader.Bind();
-        shader.SetUniform4f("u_Color", 0.2f, 0.4f, 0.3f, 1.0f);
 
         Texture texture("res/texture/picnic.png");
         texture.Bind();
@@ -110,20 +109,30 @@ int main(void)
         float incrementg = 0.005f;
         float incrementb = 0.005f;
 
-        glm::vec3 translation(200, 200, 0);
+        glm::vec3 translationA(200, 200, 0);
+        glm::vec3 translationB(400, 200, 0);
 
         while (!glfwWindowShouldClose(window))
         {
             renderer.Clear();
             ImGui_ImplGlfwGL3_NewFrame();
 
-            glm::mat4 model = glm::translate(glm::mat4(1.0), translation);
-            glm::mat4 mvp = proj * view * model;
 
-            shader.Bind();
-            shader.SetUniform4f("u_Color", r, g, b, 1.0f);
-            shader.SetUniformMat4f("u_MVP", mvp);
+            {
+                glm::mat4 model = glm::translate(glm::mat4(1.0), translationA);
+                glm::mat4 mvp = proj * view * model;
+                shader.Bind();
+                shader.SetUniformMat4f("u_MVP", mvp);
+                renderer.Draw(va, ib, shader);
+            }
 
+            {
+                glm::mat4 model = glm::translate(glm::mat4(1.0), translationB);
+                glm::mat4 mvp = proj * view * model;
+                shader.Bind();
+                shader.SetUniformMat4f("u_MVP", mvp);
+                renderer.Draw(va, ib, shader);
+            }
 
             va.Bind();
             ib.Bind();
@@ -131,18 +140,9 @@ int main(void)
 
             GLCALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
 
-            if (r > 1.0f) increment = -0.005f;
-            else if (r < 0.0f) increment = 0.005f;
-            if (g > 1.0f) incrementg = -0.003f;
-            else if (g < 0.0f) incrementg = 0.003f;
-            if (b > 1.0f) incrementb = -0.007f;
-            else if (b < 0.0f) incrementb = 0.007f;
-            r += increment;
-            g += incrementg;
-            b += incrementb;
-
             {
-                ImGui::SliderFloat3("translation", &translation.x, 0.0f, 960.0f);
+                ImGui::SliderFloat3("translation A", &translationA.x, 0.0f, 960.0f);
+                ImGui::SliderFloat3("translation B", &translationB.x, 0.0f, 960.0f);
                 ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             }
 
