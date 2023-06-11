@@ -14,6 +14,12 @@
 #include "Shader.hpp"
 #include "Texture.hpp"
 
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw_gl3.h"
+
 
 int main(void)
 {
@@ -41,10 +47,10 @@ int main(void)
     std::cout << glGetString(GL_VERSION) << std::endl;
 
     float position[]{
-        -0.5f, -0.5f, 0.0f, 0.0f,
-         0.5f, -0.5f, 1.0f, 0.0f,
-         0.5f,  0.5f, 1.0f, 1.0f,
-        -0.5f,  0.5f, 0.0f, 1.0f
+        100.0f, 100.0f, 0.0f, 0.0f,
+        200.0f, 100.0f, 1.0f, 0.0f,
+        200.0f, 200.0f, 1.0f, 1.0f,
+        100.0f, 200.0f, 0.0f, 1.0f
     };
 
     unsigned int indices[] = {
@@ -52,8 +58,12 @@ int main(void)
         2, 3, 0
     };
 
-    GLCALL(glEnable(GL_BLEND));
+    GLCALL(glEnable(GL_BLEND)); //启用blend
     GLCALL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+    //glBlendFunc(src, dest)
+    //src = how the src RGBA factor is computed (default is GL_ONE)
+    //dest = how the dest RGBA factor is computed (default is FL_ZERO)
+
     {
         unsigned int vao;
         GLCALL(glGenVertexArrays(1, &vao));
@@ -68,6 +78,9 @@ int main(void)
         va.AddBuffer(vb, layout);
 
         IndexBuffer ib(indices, 6);
+
+        glm::mat4 proj = glm::ortho(.0f, 960.0f, 0.0f, 540.0f, -1.0f, 1.0f);
+        glm::mat4 view = glm::translate(glm::mat4(1.0), glm::vec3(-100.0f, 0.0f, 0.0f));
 
         Shader shader("res/shaders/Basic.shader");
         shader.Bind();
@@ -86,6 +99,10 @@ int main(void)
 
         Renderer renderer;
 
+        ImGui::CreateContext();
+        ImGui_ImplGlfwGL3_Init(window, true);
+        ImGui::StyleColorsDark();
+
         float r = 0.0f;
         float g = 0.0f;
         float b = 0.0f;
@@ -93,11 +110,20 @@ int main(void)
         float incrementg = 0.005f;
         float incrementb = 0.005f;
 
+        glm::vec3 translation(200, 200, 0);
+
         while (!glfwWindowShouldClose(window))
         {
             renderer.Clear();
+            ImGui_ImplGlfwGL3_NewFrame();
+
+            glm::mat4 model = glm::translate(glm::mat4(1.0), translation);
+            glm::mat4 mvp = proj * view * model;
+
             shader.Bind();
             shader.SetUniform4f("u_Color", r, g, b, 1.0f);
+            shader.SetUniformMat4f("u_MVP", mvp);
+
 
             va.Bind();
             ib.Bind();
@@ -114,12 +140,24 @@ int main(void)
             r += increment;
             g += incrementg;
             b += incrementb;
+
+            {
+                ImGui::SliderFloat3("translation", &translation.x, 0.0f, 960.0f);
+                ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            }
+
+            ImGui::Render();
+            ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
+
             glfwSwapBuffers(window);
 
             glfwPollEvents();
 
         }
-    }
+    }//在调用terminaate之前析构变量
+
+    ImGui_ImplGlfwGL3_Shutdown();
+    ImGui::DestroyContext();
     glfwTerminate();
     return 0;
 }
