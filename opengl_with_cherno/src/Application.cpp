@@ -21,6 +21,7 @@
 #include "imgui/imgui_impl_glfw_gl3.h"
 
 #include "tests/TestClearColor.h"
+#include "tests/TestTexture2D.h"
 
 
 int main(void)
@@ -42,14 +43,14 @@ int main(void)
         return -1;
     }
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(1); 
+    glfwSwapInterval(1);
 
-    if (glewInit() != GLEW_OK) 
+    if (glewInit() != GLEW_OK)
         std::cout << "Error" << std::endl;
     std::cout << glGetString(GL_VERSION) << std::endl;
 
     {
-        GLCALL(glEnable(GL_BLEND)); 
+        GLCALL(glEnable(GL_BLEND));
         GLCALL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 
         Renderer renderer;
@@ -63,6 +64,7 @@ int main(void)
         currentTest = testMenu;
 
         testMenu->RegisterTest<test::TestClearColor>("Clear Color");
+        testMenu->RegisterTest<test::TestTexture2D>("Texture2D");
 
         while (!glfwWindowShouldClose(window))
         {
