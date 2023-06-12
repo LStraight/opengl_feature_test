@@ -63,8 +63,8 @@ int main(void)
         test::TestMenu* testMenu = new test::TestMenu(currentTest);
         currentTest = testMenu;
 
-        testMenu->RegisterTest<test::TestClearColor>("Clear Color");
-        testMenu->RegisterTest<test::TestTexture2D>("Texture2D");
+        testMenu->RegisterTest<test::TestClearColor>("Clear Color");//加入颜色测试
+        testMenu->RegisterTest<test::TestTexture2D>("Texture2D");//加入纹理测试
 
         while (!glfwWindowShouldClose(window))
         {
